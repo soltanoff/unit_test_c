@@ -1,8 +1,6 @@
 # Unit test for C
 
-This is the "list example" from the Check.
-
-This demonstrates using Check with CMake.
+This demonstrates using `Check` with `CMake`.
 
 CMake:
 ========================
