@@ -5,17 +5,18 @@
 #include "src/good.h"
 
 
-#define SMALL_LIST_SIZE 5
-#define BIG_LIST_SIZE 50000
+#define BUF_SIZE 2U
+#define SMALL_LIST_SIZE 5U
+#define BIG_LIST_SIZE 50000U
 
 
 list_t *test_small_list;
 list_t *test_big_list;
 
 
-int make_list(list_t **head, const int size) {
+int8_t make_list(list_t **head, const uint32_t size) {
     list_t *prev = *head;
-    for (int i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         list_t *temp = malloc(sizeof(list_t));
         if (temp) {
             temp->next = NULL;
@@ -27,7 +28,7 @@ int make_list(list_t **head, const int size) {
                 *head = temp;
                 prev = *head;
             }
-        } else return 0;
+        } else return -1;
     }
     return 1;
 }
@@ -72,15 +73,19 @@ END_TEST
 
 START_TEST(test_item_data)
     {
-        char buf[250];
-        ck_assert_int_eq(strcmp(item_data(test_big_list, buf), "0"), 0);
-        ck_assert_int_eq(strcmp(item_data(test_small_list->next, buf), "1"), 0);
+        char buf[BUF_SIZE];
+
+        ck_assert_int_eq(item_data(test_big_list, buf), 1);
+        ck_assert_int_eq(strcmp(buf, "0"), 0);
+
+        ck_assert_int_eq(item_data(test_small_list->next, buf), 1);
+        ck_assert_int_eq(strcmp(buf, "1"), 0);
     }
 END_TEST
 
 START_TEST(test_remove_next_from_list_middle)
     {
-        const int temp_list_size = 3;
+        const uint32_t temp_list_size = 3;
         list_t *temp_list = NULL;
         if (!make_list(&temp_list, temp_list_size))
             ck_abort_msg("Can't create a list, please try again...");
@@ -97,7 +102,7 @@ END_TEST
 
 START_TEST(test_remove_next_from_list_last)
     {
-        const int temp_list_size = 2;
+        const uint32_t temp_list_size = 2;
         list_t *temp_list = NULL;
         if (!make_list(&temp_list, temp_list_size))
             ck_abort_msg("Can't create a list, please try again...");
@@ -118,7 +123,7 @@ END_TEST
 
 START_TEST(test_remove_next_from_list_of_sizes_one)
     {
-        const int temp_list_size = 1;
+        const uint32_t temp_list_size = 1;
         list_t *temp_list = NULL;
         if (!make_list(&temp_list, temp_list_size))
             ck_abort_msg("Can't create a list, please try again...");
@@ -132,10 +137,9 @@ START_TEST(test_remove_next_from_list_of_sizes_one)
     }
 END_TEST
 
-
 START_TEST(test_insert_next_from_list_after_head)
     {
-        const int temp_list_size = 3;
+        const uint32_t temp_list_size = 3;
         list_t *temp_list = NULL;
         if (!make_list(&temp_list, temp_list_size))
             ck_abort_msg("Can't create a list, please try again...");
@@ -152,10 +156,9 @@ START_TEST(test_insert_next_from_list_after_head)
     }
 END_TEST
 
-
 START_TEST(test_insert_next_from_list_after_last)
     {
-        const int temp_list_size = 2;
+        const uint32_t temp_list_size = 2;
         list_t *temp_list = NULL;
         if (!make_list(&temp_list, temp_list_size))
             ck_abort_msg("Can't create a list, please try again...");
@@ -171,6 +174,18 @@ START_TEST(test_insert_next_from_list_after_last)
     }
 END_TEST
 
+START_TEST(test_methods_with_empty_pointer)
+    {
+        list_t *temp_list = NULL;
+        char buf[BUF_SIZE];
+
+        ck_assert_int_eq(count_list_items(temp_list), 0);
+        ck_assert_int_eq(insert_next_to_list(temp_list, 666), -1);
+        ck_assert_int_eq(remove_next_from_list(temp_list), -1);
+        ck_assert_int_eq(item_data(temp_list, buf), -1);
+    }
+END_TEST
+
 
 Suite *list_suite(void) {
     Suite *s;
@@ -178,6 +193,7 @@ Suite *list_suite(void) {
     TCase *tc_item_data;
     TCase *tc_rm;
     TCase *tc_insert;
+    TCase *tc_empty;
 
     s = suite_create("list");
 
@@ -210,11 +226,16 @@ Suite *list_suite(void) {
     tcase_add_test(tc_insert, test_insert_next_from_list_after_last);
     suite_add_tcase(s, tc_insert);
 
+    /* `Methods with empty pointer` test case */
+    tc_empty = tcase_create("`Methods with empty pointer`");
+    tcase_add_test(tc_empty, test_methods_with_empty_pointer);
+    suite_add_tcase(s, tc_empty);
+
     return s;
 }
 
 int main(void) {
-    int number_failed;
+    uint32_t number_failed;
     Suite *s;
     SRunner *sr;
 
